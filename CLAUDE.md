@@ -34,6 +34,8 @@ npx shadcn@latest add <컴포넌트>
 
 `next.config.ts`에서 `cacheComponents`와 `partialPrefetching`이 켜져 있어 현재 모든 라우트가 정적으로 프리렌더링됩니다. 요청마다 달라지는 데이터나 런타임 API를 쓰는 컴포넌트는 `<Suspense>`로 감싸고, 캐시할 데이터에는 `"use cache"`를 사용합니다. 관련 내용은 `node_modules/next/dist/docs/`에서 확인합니다.
 
+`cacheComponents`가 켜져 있으면 클라이언트 이동 시 이전 라우트가 `<Activity>`로 숨겨진 채 DOM에 남고 상태도 유지됩니다. 폼 입력값도 유지되므로, 초기화가 필요하면 명시적으로 처리합니다. DOM을 검사할 때는 보이는 요소만 대상으로 합니다.
+
 `app/error.tsx`는 이 버전의 방식대로 `reset`이 아닌 `retry` prop을 사용합니다.
 
 ### UI 컴포넌트
@@ -48,27 +50,28 @@ npx shadcn@latest add <컴포넌트>
 
 ### 터치 대상 44px
 
-`button.tsx`, `input.tsx`, `dropdown-menu.tsx`의 기본 높이를 44px 이상으로 수정했습니다. `shadcn add --overwrite`로 다시 받으면 이 수정이 사라지므로 복구해야 합니다. 새로 추가한 컴포넌트의 클릭 영역도 `h-11` 또는 `min-h-11` 이상으로 맞춥니다.
+`button.tsx`, `input.tsx`, `dropdown-menu.tsx`, `checkbox.tsx`, `tabs.tsx`의 기본 높이 또는 클릭 영역을 44px 이상으로 수정했습니다. `shadcn add`가 `button.tsx` 등 기존 파일을 덮어쓸지 물으면 거부합니다(비대화형 실행에서는 프롬프트에서 멈출 수 있으니 `n`을 입력으로 넘깁니다). `--overwrite`로 다시 받으면 이 수정이 사라지므로 복구해야 합니다. 새로 추가한 컴포넌트의 클릭 영역도 `h-11` 또는 `min-h-11` 이상으로 맞춥니다.
 
 ### 상태 관리
 
-서버의 동시 요청 간에 상태가 섞이지 않도록 전역 Zustand 스토어를 만들지 않습니다. `stores/counter-store.ts`와 `stores/counter-store-provider.tsx`의 패턴을 따릅니다.
+서버의 동시 요청 간에 상태가 섞이지 않도록 전역 Zustand 스토어를 만들지 않습니다. `stores/todo-store.ts`와 `stores/todo-store-provider.ts`의 패턴을 따릅니다.
 
 1. `zustand/vanilla`의 `createStore`로 스토어 팩토리를 만듭니다.
-2. 클라이언트 Provider에서 `useState`로 한 번만 생성해 Context로 전달합니다.
-3. `persist`를 쓸 때는 `skipHydration: true`로 두고 Provider의 `useEffect`에서 `rehydrate()`를 호출합니다. hydration 불일치를 막기 위한 설정입니다.
+2. `stores/create-store-context.tsx`의 `createStoreContext`로 Provider와 훅을 만듭니다. Provider는 스토어를 한 번만 생성하고, `persist`가 있으면 마운트 후 `rehydrate()`를 호출합니다.
+3. `persist`를 쓸 때는 hydration 불일치를 막기 위해 `skipHydration: true`로 두고, 저장값은 `merge`에서 검증합니다.
 
 서버 컴포넌트에서는 스토어를 읽거나 쓰지 않습니다.
 
 ### 폼
 
-shadcn의 `form` 컴포넌트를 쓰지 않습니다. Zod 스키마를 `schemas/`에 두고 `zodResolver`, RHF `Controller`, `components/ui/field.tsx`의 `Field`, `FieldError`를 조합합니다. `app/examples/form/_components/contact-form.tsx`가 기준 예제입니다.
+shadcn의 `form` 컴포넌트를 쓰지 않습니다. Zod 스키마를 `schemas/`에 두고 `zodResolver`, RHF `Controller`, `components/ui/field.tsx`의 `Field`, `FieldError`를 조합합니다. `app/examples/contact-form/_components/contact-form.tsx`가 기준 예제입니다. 서버 검증이 필요하면 `app/examples/server-action/`처럼 `useActionState`와 서버 액션을 사용하고, 서버 액션 안에서 Zod로 다시 검증합니다. 예제의 입력값은 저장하지 않습니다.
 
 ### 사이트 설정과 예제
 
 - 사이트 이름, 설명, 내비게이션은 `config/site.ts`에서 관리하며 헤더, 모바일 메뉴, 메타데이터가 이 값을 사용합니다.
 - 라우트 전용 컴포넌트는 해당 라우트의 `_components/`에 둡니다.
-- `app/examples/`와 이 폴더가 쓰는 `schemas/contact.ts`, `stores/counter-*`는 삭제 가능한 예제입니다. 삭제 절차는 README를 따릅니다.
+- 예제는 `config/examples.ts`에 기술 분류별로 등록하면 첫 페이지, `/examples` 목록, 상세 화면 틀(`components/common/example-shell.tsx`)에 함께 반영됩니다. 경로는 `/examples/<이름>` 한 단계로 유지해 상위 경로 404를 만들지 않습니다.
+- `app/examples/`와 예제 전용 스키마, 스토어는 삭제할 수 있습니다. 삭제 절차는 README를 따릅니다.
 
 ## 아이콘
 

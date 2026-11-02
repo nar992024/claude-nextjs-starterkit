@@ -8,8 +8,6 @@ export type CounterStore = {
   reset: () => void;
 };
 
-// 서버의 동시 요청 간에 상태가 섞이지 않도록 전역 스토어 대신 팩토리로 생성한다.
-// 서버와 첫 클라이언트 렌더링 결과를 맞추기 위해 복원은 마운트 후 Provider에서 실행한다.
 export const createCounterStore = () =>
   createStore<CounterStore>()(
     persist(
@@ -22,8 +20,14 @@ export const createCounterStore = () =>
       {
         name: "counter-storage",
         skipHydration: true,
+        // 브라우저 저장값은 변조되거나 이전 형식일 수 있으므로 검증 후 복원한다.
+        merge: (persisted, current) => {
+          const count = (persisted as { count?: unknown } | null | undefined)
+            ?.count;
+          return typeof count === "number" && Number.isFinite(count)
+            ? { ...current, count }
+            : current;
+        },
       },
     ),
   );
-
-export type CounterStoreApi = ReturnType<typeof createCounterStore>;
