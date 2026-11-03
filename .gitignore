@@ -37,6 +37,9 @@ yarn-error.log*
 .env*
 !.env.example
 
+# claude code 명령어 로그 (명령어에 비밀 값이 포함될 수 있음)
+.claude/logs/
+
 # vercel
 .vercel
 

@@ -17,5 +17,39 @@
   "env": {
     "NODE_ENV": "development"
   },
-  "outputStyle": "Explanatory"
+  "outputStyle": "Explanatory",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/format-file.mts"],
+            "timeout": 120,
+            "statusMessage": "포맷 적용 중"
+          },
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/type-check.mts"],
+            "timeout": 120,
+            "statusMessage": "타입 검사 중"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/log-command.mts"],
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
 }
