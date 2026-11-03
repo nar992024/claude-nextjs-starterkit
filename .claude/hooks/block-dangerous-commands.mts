@@ -66,6 +66,25 @@ const hasRecursiveAndForce = (args: string[]): boolean => {
   return recursive && force;
 };
 
+// git -C 경로처럼 하위 명령 앞에 오는 옵션을 건너뛰고 push인지 확인한 뒤 강제 옵션을 찾는다
+const isForcePush = (args: string[]): boolean => {
+  let index = 0;
+  while (args[index]?.startsWith("-")) {
+    index += /^-[Cc]$/.test(args[index]) ? 2 : 1;
+  }
+  if (args[index]?.toLowerCase() !== "push") {
+    return false;
+  }
+  return args
+    .slice(index + 1)
+    .some(
+      (arg) =>
+        /^--force(?:-with-lease|-if-includes)?(?:=.*)?$/.test(arg) ||
+        /^-[a-zA-Z]*f[a-zA-Z]*$/.test(arg) ||
+        arg.startsWith("+"),
+    );
+};
+
 const findDangerousCommand = (command: string): string | null => {
   const segments = removeQuotedText(command).split(/&&|\|\||[;|&\n`()]|\$\(/);
   for (const segment of segments) {
@@ -77,6 +96,9 @@ const findDangerousCommand = (command: string): string | null => {
     const name = getCommandName(tokens[0] ?? "");
     if (name === "sudo") {
       return "sudo";
+    }
+    if (name === "git" && isForcePush(tokens.slice(1))) {
+      return "git push 강제 푸시";
     }
     if (DELETE_COMMANDS.has(name) && hasRecursiveAndForce(tokens.slice(1))) {
       return `${name} (재귀 강제 삭제)`;
