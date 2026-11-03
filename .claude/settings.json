@@ -5,7 +5,8 @@
       "Bash(npm run dev)",
       "Bash(npm run build)",
       "mcp__context7",
-      "mcp__playwright"
+      "mcp__playwright",
+      "mcp__sequential-thinking"
     ],
     "deny": [
       "Bash(rm -rf *)",
@@ -19,7 +20,7 @@
     ],
     "ask": []
   },
-  "enabledMcpjsonServers": ["context7", "playwright"],
+  "enabledMcpjsonServers": ["context7", "playwright", "sequential-thinking"],
   "outputStyle": "Explanatory",
   "hooks": {
     "PreToolUse": [
